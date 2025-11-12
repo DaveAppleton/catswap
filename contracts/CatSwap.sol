@@ -6,7 +6,9 @@ import "@openzeppelin/contracts/interfaces/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-contract CatSwap {
+import "./UsesGalaxisRegistry.sol";
+
+contract CatSwap is UsesGalaxisRegistry {
     using EnumerableSet for EnumerableSet.UintSet;
 
     IERC721Enumerable                   public cats;
@@ -20,12 +22,15 @@ contract CatSwap {
     mapping(uint256 => EnumerableSet.UintSet)   possibleSwaps;
 
 
-    constructor(IERC721Enumerable _cats) {
-        cats = _cats;
+    constructor(address _galaxisRegistry) UsesGalaxisRegistry(_galaxisRegistry) {
+        address catsAddress = galaxisRegistry.getRegistryAddress("TOKAIDO_CATS");
+        require(catsAddress != address(0),err("TOKAIDO CATS key not set"));
+        cats = IERC721Enumerable(galaxisRegistry.getRegistryAddress("TOKAIDO_CATS"));
     }
 
 
     function submitForTrade(uint256 tokenId, uint256[] calldata wanted) external {
+        require(galaxisRegistry.getRegistryAddress("CAT_SWAP") == address(this),err("not curent CatSwap contract"));
         require(cats.ownerOf(tokenId) == msg.sender, err("you do not own this cat"));
         require(cats.isApprovedForAll(msg.sender,address(this)),err("you need to trust me"));
         tokenOwners[tokenId] = msg.sender;

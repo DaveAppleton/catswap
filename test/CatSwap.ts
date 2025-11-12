@@ -10,14 +10,19 @@ let test2: any;
 let test3: any;
 let Cats : any;
 let CatSwap: any;
+let GalaxisRegistry : any;
 
 
 
 
-async function deployContract(name: string, args: any[], ) {
+async function deployContract(name: string, args: any[], KEY : string) {
     console.log(`Deploying ${name} contract to ${connection.networkName}`);
     const instance = await ethers.deployContract(name, args, {});
     console.log(`${name} deployed to: ${await instance.getAddress()}`);
+     if (KEY.length > 0) {
+        let tx = await GalaxisRegistry.setRegistryAddress(KEY,instance.target)
+        await tx.wait()
+    }
     return instance;
 }
 
@@ -25,11 +30,14 @@ describe("test",function(){
 
     before(async function(){
         [test1, test2, test3] = await ethers.getSigners();
-        Cats = await deployContract("Cats",[]);
+        GalaxisRegistry = await deployContract("TheRegistry",[],"")
+        const GalaxisRegistryAddress = await GalaxisRegistry.getAddress()
+        console.log(`Galaxis Registry at ${GalaxisRegistryAddress}`)
+        Cats = await deployContract("Cats",[],"TOKAIDO_CATS");
         await Cats.connect(test1).mint(10)
         await Cats.connect(test2).mint(10)
         await Cats.connect(test3).mint(10)
-        CatSwap = await deployContract("CatSwap",[Cats.target])
+        CatSwap = await deployContract("CatSwap",[GalaxisRegistryAddress],"CAT_SWAP")
     })
 
     it("1.0 t1 offers 1 for swap",async function(){
